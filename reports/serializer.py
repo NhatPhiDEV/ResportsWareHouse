@@ -8,6 +8,8 @@ class PramFilter(serializers.Serializer):
     params = serializers.CharField( required= False)
     month = serializers.CharField( required= False)
     year = serializers.CharField( required= False)
+    month2 = serializers.CharField( required= False)
+    year2 = serializers.CharField( required= False)
     departments = serializers.CharField( required= False)
 
 class ReportsSerializer(serializers.ModelSerializer):

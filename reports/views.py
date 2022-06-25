@@ -27,7 +27,7 @@ class ReportsViewSet(viewsets.ViewSet):
             cursor.close()
     @swagger_auto_schema(request_body=PramFilter)
     @action(methods=['post'], detail=False, url_path='filter-data')
-    def filter_data(self,request):  # sourcery skip: low-code-quality, remove-redundant-if, remove-unnecessary-else, swap-if-else-branches
+    def filter_data(self,request):  # sourcery skip: low-code-quality, merge-nested-ifs
         cursor = connection.cursor()
         # Get data in request
         SELECT_PARAM = request.data.get('params')
@@ -41,87 +41,124 @@ class ReportsViewSet(viewsets.ViewSet):
         DEPARTMENTS = request.data.get('departments')
         CONDITIONS = ''
         SELECTED = ''
+        IsChecked = ''
         # logic 
         try:
-            # Filter by month (in year)
+            # Filter by month (in year) PASS
             if MONTH_PARAM != 'NULL' and YEAR_PARAM != 'NULL' and DEPARTMENTS == MONTH_PARAM_2 == YEAR_PARAM_2 =='NULL':  
-                SELECTED = f'{SELECT_PARAM},month_name'
-                CONDITIONS = f"year = {YEAR_PARAM} AND month_name = {MONTH_PARAM}"
-
-            elif MONTH_PARAM_2 != 'NULL' and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS == MONTH_PARAM == YEAR_PARAM =='NULL':  
-                SELECTED = f'{SELECT_PARAM},month_name'
-                CONDITIONS = f"year = {YEAR_PARAM_2} AND month_name = {MONTH_PARAM_2}"
-
-            #  Filter year (display value month in year)
-            elif  YEAR_PARAM != 'NULL' and MONTH_PARAM == 'NULL' and DEPARTMENTS == MONTH_PARAM_2 == YEAR_PARAM_2 =='NULL':
                 temp = SELECT_PARAM.split(",")
                 result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
-                SELECTED = f'{result_temp}month_name'
+                SELECTED = f'{result_temp}month_name,year'
+                CONDITIONS = f"year = {YEAR_PARAM} AND month_name = {MONTH_PARAM}  GROUP BY month_name"
+            # ? PASS
+            if MONTH_PARAM_2 != 'NULL' and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS == MONTH_PARAM == YEAR_PARAM =='NULL':  
+                temp = SELECT_PARAM.split(",")
+                result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
+                SELECTED = f'{result_temp}month_name,year'
+                CONDITIONS = f"year = {YEAR_PARAM_2} AND month_name = {MONTH_PARAM_2}  GROUP BY month_name"
+
+            #  Filter year (display value month in year) PASS
+            if  YEAR_PARAM != 'NULL' and MONTH_PARAM == DEPARTMENTS == MONTH_PARAM_2 == YEAR_PARAM_2 =='NULL':
+                temp = SELECT_PARAM.split(",")
+                result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
+                SELECTED = f'{result_temp}month_name,year'
                 CONDITIONS = f"year = {YEAR_PARAM} GROUP BY month_name"
 
-            elif  YEAR_PARAM_2 != 'NULL' and MONTH_PARAM == DEPARTMENTS == MONTH_PARAM_2 == YEAR_PARAM =='NULL':
+            if  YEAR_PARAM_2 != 'NULL' and MONTH_PARAM == DEPARTMENTS == MONTH_PARAM_2 == YEAR_PARAM =='NULL':
                 temp = SELECT_PARAM.split(",")
                 result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
-                SELECTED = f'{result_temp}month_name'
+                SELECTED = f'{result_temp}month_name,year'
                 CONDITIONS = f"year = {YEAR_PARAM_2} GROUP BY month_name"
 
-            # Filter departments by year
-            elif MONTH_PARAM == YEAR_PARAM == MONTH_PARAM_2 == YEAR_PARAM_2 =='NULL' and DEPARTMENTS != 'NULL':
-                SELECTED = f'{SELECT_PARAM},year'
-                CONDITIONS = f'table_departments.id = {DEPARTMENTS}'
-
-            # Filter by month, year and departments
-            elif MONTH_PARAM != 'NULL' and YEAR_PARAM != 'NULL' and DEPARTMENTS != 'NULL' and  MONTH_PARAM_2 == YEAR_PARAM_2 =='NULL':
-                SELECTED = f'{SELECT_PARAM},departments_name'
-                CONDITIONS = f'year = {YEAR_PARAM} AND month_name={MONTH_PARAM} AND table_departments.id = {DEPARTMENTS}'
+            # Filter departments by year (PASS)
+            if MONTH_PARAM == YEAR_PARAM == MONTH_PARAM_2 == YEAR_PARAM_2 =='NULL' and DEPARTMENTS != 'NULL':
+                temp = SELECT_PARAM.split(",")
+                result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
+                SELECTED = f'{result_temp}month_name,year'
+                CONDITIONS = f'table_departments.id = {DEPARTMENTS} GROUP BY year'
  
-            elif MONTH_PARAM_2 != 'NULL' and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS != 'NULL' and  MONTH_PARAM == YEAR_PARAM =='NULL':
-                SELECTED = f'{SELECT_PARAM},departments_name'
+            # Filter by month, year and departments (PASS)
+            if MONTH_PARAM != 'NULL' and YEAR_PARAM != 'NULL' and DEPARTMENTS != 'NULL' and  MONTH_PARAM_2 == YEAR_PARAM_2 =='NULL':
+                temp = SELECT_PARAM.split(",")
+                result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
+                SELECTED = f'{result_temp}month_name,departments_name'
+                CONDITIONS = f'year = {YEAR_PARAM} AND month_name={MONTH_PARAM} AND table_departments.id = {DEPARTMENTS} GROUP BY month_name'
+ 
+            if MONTH_PARAM_2 != 'NULL' and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS != 'NULL' and  MONTH_PARAM == YEAR_PARAM =='NULL':
+                temp = SELECT_PARAM.split(",")
+                result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
+                SELECTED = f'{result_temp}month_name,departments_name'
                 CONDITIONS = f'year = {YEAR_PARAM_2} AND month_name={MONTH_PARAM_2} AND table_departments.id = {DEPARTMENTS}'
 
-            # Filter by year and departments
-            elif MONTH_PARAM == MONTH_PARAM_2 == YEAR_PARAM_2 =='NULL' and YEAR_PARAM != 'NULL' and DEPARTMENTS != "NULL":
+            # Filter by year and departments (PASS)
+            if MONTH_PARAM == MONTH_PARAM_2 == YEAR_PARAM_2 =='NULL' and YEAR_PARAM != 'NULL' and DEPARTMENTS != "NULL":
                 temp = SELECT_PARAM.split(",")
                 result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
                 SELECTED = f'{result_temp}month_name'
                 CONDITIONS = f"year = {YEAR_PARAM} AND table_departments.id = {DEPARTMENTS} GROUP BY month_name"
            
-            elif MONTH_PARAM == MONTH_PARAM_2 == YEAR_PARAM =='NULL' and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS != "NULL":
+            if MONTH_PARAM == MONTH_PARAM_2 == YEAR_PARAM =='NULL' and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS != "NULL":
                 temp = SELECT_PARAM.split(",")
                 result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
                 SELECTED = f'{result_temp}month_name'
                 CONDITIONS = f"year = {YEAR_PARAM_2} AND table_departments.id = {DEPARTMENTS} GROUP BY month_name"
-
-            elif MONTH_PARAM != 'NULL' and MONTH_PARAM_2 != 'NULL' and YEAR_PARAM != 'NULL' and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS == 'NULL':
+            # Filter 2 year, 2 month (month1 != month2) PASS
+            if MONTH_PARAM != 'NULL' and MONTH_PARAM_2 != 'NULL' and YEAR_PARAM != 'NULL' and MONTH_PARAM != MONTH_PARAM_2 and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS == 'NULL':
                 temp = SELECT_PARAM.split(",")
                 result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
                 SELECTED = f'{result_temp}month_name,year'
-                CONDITIONS = f"{YEAR_PARAM} <= year <= {YEAR_PARAM_2} AND {MONTH_PARAM} <= month_name <= {MONTH_PARAM_2}  GROUP BY month_name"
+                CONDITIONS = f"year >= {YEAR_PARAM} AND year  <= {YEAR_PARAM_2} AND month_name >={MONTH_PARAM} AND month_name  <= {MONTH_PARAM_2}  GROUP BY month_name"
+            # Filter 2 year, 2 month (month1 == month2) PASS
+            if MONTH_PARAM != 'NULL' and MONTH_PARAM_2 != 'NULL' and YEAR_PARAM != 'NULL' and MONTH_PARAM == MONTH_PARAM_2 and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS == 'NULL':
+                IsChecked = 'TRUE'
+                temp = SELECT_PARAM.split(",")
+                result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
+                SELECTED = f'{result_temp}month_name,year'
+                CONDITIONS = f"year >= {YEAR_PARAM} AND year  <= {YEAR_PARAM_2} GROUP BY month_name"
             
-            elif MONTH_PARAM != 'NULL' and MONTH_PARAM_2 != 'NULL' and YEAR_PARAM != 'NULL' and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS != 'NULL':
+            # Filter 2 year, 2 month, departments (month1 != month2) PASS
+            if MONTH_PARAM != 'NULL' and MONTH_PARAM_2 != 'NULL' and YEAR_PARAM != 'NULL'  and MONTH_PARAM != MONTH_PARAM_2 and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS != 'NULL':
                 temp = SELECT_PARAM.split(",")
                 result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
                 SELECTED = f'{result_temp}month_name,year'
-                CONDITIONS = f"{YEAR_PARAM} <= year <= {YEAR_PARAM_2} AND {MONTH_PARAM} <= month_name <= {MONTH_PARAM_2} AND table_departments.id = {DEPARTMENTS}  GROUP BY month_name"
+                CONDITIONS = f"year >= {YEAR_PARAM} AND year  <= {YEAR_PARAM_2} AND  month_name >={MONTH_PARAM} AND month_name  <= {MONTH_PARAM_2} AND table_departments.id = {DEPARTMENTS}  GROUP BY month_name"
             
-            elif MONTH_PARAM == MONTH_PARAM_2 == 'NULL' and YEAR_PARAM != 'NULL' and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS == 'NULL':
+            # Filter 2 year, 2 month departments (month1 == month2) PASS
+            if MONTH_PARAM != 'NULL' and MONTH_PARAM_2 != 'NULL' and YEAR_PARAM != 'NULL' and MONTH_PARAM == MONTH_PARAM_2 and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS != 'NULL':
+                IsChecked = 'TRUE'
                 temp = SELECT_PARAM.split(",")
                 result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
                 SELECTED = f'{result_temp}month_name,year'
-                CONDITIONS = f"{YEAR_PARAM} <= year <= {YEAR_PARAM_2}  GROUP BY month_name"
+                CONDITIONS = f"year >= {YEAR_PARAM} AND year  <= {YEAR_PARAM_2} AND table_departments.id = {DEPARTMENTS} GROUP BY month_name"
             
-            elif MONTH_PARAM == MONTH_PARAM_2 == 'NULL' and YEAR_PARAM != 'NULL' and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS != 'NULL':
+            # Filter 2 year (PASS)
+            if MONTH_PARAM == MONTH_PARAM_2 == 'NULL' and YEAR_PARAM != 'NULL' and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS == 'NULL':
                 temp = SELECT_PARAM.split(",")
                 result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
-                SELECTED = f'{result_temp}month_name,year'
-                CONDITIONS = f"{YEAR_PARAM} <= year <= {YEAR_PARAM_2} table_departments.id = {DEPARTMENTS} GROUP BY month_name"
-            else:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+                SELECTED = f'{result_temp}year'
+                CONDITIONS = f"year >= {YEAR_PARAM} AND year  <= {YEAR_PARAM_2}  GROUP BY year"
+            # Filter 2 year + Departments()
+            if MONTH_PARAM == MONTH_PARAM_2 == 'NULL' and YEAR_PARAM != 'NULL' and YEAR_PARAM_2 != 'NULL' and DEPARTMENTS != 'NULL':
+                temp = SELECT_PARAM.split(",")
+                result_temp = ''.join(f'Sum({value}) AS {value}, ' for value in temp)
+                SELECTED = f'{result_temp}year'
+                CONDITIONS = f"year >= {YEAR_PARAM} AND year  <= {YEAR_PARAM_2} AND table_departments.id = {DEPARTMENTS} GROUP BY year"
             # Query sql
             cursor.execute("CALL `filter_data`('"+SELECTED+"', '"+CONDITIONS+"')")
             # Format tuple to json
             columns = cursor.description
             result = []
+            if(IsChecked == 'TRUE'):
+                for value in cursor.fetchall():
+                    if value[2] == YEAR_PARAM_2:
+                        if(value[1] <= MONTH_PARAM):
+                            tmp = {columns[index][0]: column for index, column in enumerate(value)}
+                            result.append(tmp)
+                    if value[2] == YEAR_PARAM:
+                        if(value[1] >= MONTH_PARAM):
+                            tmp = {columns[index][0]: column for index, column in enumerate(value)}
+                            result.append(tmp)
+                
             for value in cursor.fetchall():
                 tmp = {columns[index][0]: column for index, column in enumerate(value)}
                 result.append(tmp)
